@@ -2,6 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const clientesRoutes = require("./routes/clientes");
+// borrar despues cons pool
+const pool = require('./database');
 
 const app = express();
 app.use(cors());
