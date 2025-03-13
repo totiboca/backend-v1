@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const clientesRoutes = require("./routes/clientes");
 // borrar despues cons pool
-const pool = require('./db');
+const pool = require('../config/db');
 
 const app = express();
 app.use(cors());
