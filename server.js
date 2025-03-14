@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, '../bandejas-app/build')));
 
 // Para manejar rutas tipo SPA (React Router):
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../bandejas-app/build', 'index.html'));
+  res.sendFile(path.join(__dirname, '../bandejas-app/build','index.html'));
 });
 
 
