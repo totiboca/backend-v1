@@ -11,7 +11,7 @@ const SECRET_KEY = "clave_secreta_super_segura"; // 🔴 Usa una clave segura en
 // **Registro de usuario**
 router.post("/registro", async (req, res) => {
     const { usuario, clave, id_cliente } = req.body;
-    console.log("req.body:", req.body);
+
     if (!usuario || !clave || !id_cliente) {
         return res.status(400).json({ error: "Usuario, contraseña e ID Cliente son requeridos." });
     }
@@ -157,3 +157,4 @@ router.post("/cambiar-clave", authenticateToken, async (req, res) => {
 
 
 module.exports = router;
+
