@@ -6,7 +6,7 @@ const router = express.Router();
 const authenticateToken = require("../middleware/auth"); 
 
 
-const SECRET_KEY = "clave_secreta_super_segura"; // 🔴 Usa una clave segura en .env
+const SECRET_KEY = process.env.JWT_SECRET; // 🔴 Usa una clave segura en .env
 
 // **Registro de usuario**
 router.post("/registro", async (req, res) => {
@@ -78,7 +78,7 @@ router.post("/login", async (req, res) => {
             tipo: tipoUsuario, // Guardamos el tipo de usuario
         };
  
-        const token = jwt.sign(tokenPayload, SECRET_KEY, { expiresIn: "2h" });
+        const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, { expiresIn: "2h" });
 
 
 // HASTA ACA LO NUEVO   
