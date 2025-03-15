@@ -11,7 +11,7 @@ const app = express();
 
 
 
-app.use(cors()); eso lo tengo que habilitar y borrar hasta el proximo comentario
+app.use(cors()); 
 // app.use(cors({
 //     origin: [
 //       "http://localhost:3000",
