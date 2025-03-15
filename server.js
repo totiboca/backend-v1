@@ -4,7 +4,7 @@ const cors = require("cors");
 const clientesRoutes = require("./routes/clientes");
 const path = require('path');
 const empleadoRoutes = require("./routes/empleado");
-
+const app = express();
 // Middleware para parsear JSON
 app.use(express.json());
 
@@ -12,7 +12,7 @@ app.use(express.json());
 app.use("/api/empleado", empleadoRoutes);
 
 
-const app = express();
+
 app.use(cors());
 app.use(express.json());
 const authRoutes = require("./routes/auth");

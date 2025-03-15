@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const bcryptjs = require("bcryptjs");
-const pool = require("../config/db"); // Asumiendo que usas un pool de conexión para tu base de datos
+const pool = require("../db"); // Asumiendo que usas un pool de conexión para tu base de datos
 
 // Endpoint para registrar un empleado
 router.post("/registro", async (req, res) => {
