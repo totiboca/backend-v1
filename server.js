@@ -6,7 +6,7 @@ const path = require('path');
 const empleadoRoutes = require("./routes/empleado");
 const app = express();
 // Middleware para parsear JSON
-app.use(express.json());
+
 
 
 
