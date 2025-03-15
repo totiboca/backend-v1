@@ -25,7 +25,7 @@ router.post("/registro", async (req, res) => {
 
     // Insertar el nuevo usuario en la base de datos con rol "empleado"
     await pool.query(
-      "INSERT INTO usuarios (usuario, clave, rol) VALUES (?, ?, 'Operador')",
+      "INSERT INTO usuarios (id_cliente, usuario, clave, rol) VALUES (0, ?, ?, 'Operador')",
       [usuario, hash, "Operador"]
     );
 
