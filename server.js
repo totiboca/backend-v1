@@ -14,10 +14,15 @@ const app = express();
 // app.use(cors()); eso lo tengo que habilitar y borrar hasta el proximo comentario
 app.use(cors({
     origin: [
-      "http://localhost:3000",                 // Si pruebas en local
+      "http://localhost:3000",
+      "https://prueba-bandejas-production-2691.up.railway.app/",
+      "https://prueba-bandejas-prod-1.up.railway.app"
+      "https://prueba-bandejas-prod-1.up.railway.app/api"
+      "prueba-bandejas-production.up.railway.app"
+              // Si pruebas en local
       "https://empleado-bandejas-production.up.railway.app", // O la URL de tu frontend en producción
-      "https://frontend-clientes-production.up.railway.app",
-      "https://prueba-bandejas-production-2691.up.railway.app/"   // Si tienes otro frontend
+      "https://frontend-clientes-production.up.railway.app"
+         // Si tienes otro frontend
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
