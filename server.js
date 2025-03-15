@@ -3,6 +3,14 @@ const express = require("express");
 const cors = require("cors");
 const clientesRoutes = require("./routes/clientes");
 const path = require('path');
+const empleadoRoutes = require("./routes/empleado");
+
+// Middleware para parsear JSON
+app.use(express.json());
+
+// Rutas de empleado, usando un prefijo (por ejemplo, "/api/empleado")
+app.use("/api/empleado", empleadoRoutes);
+
 
 const app = express();
 app.use(cors());
@@ -27,6 +35,13 @@ app._router.stack.forEach((r) => {
         console.log(`Ruta activa: ${r.route.stack[0].method.toUpperCase()} ${r.route.path}`);
     }
 });
+
+
+// app.use(express.static(path.join(__dirname, "build")));
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "build", "index.html"));
+// });
+
 
 
 app.listen(PORT, () => {
