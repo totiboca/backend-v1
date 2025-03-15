@@ -11,7 +11,7 @@ app.use(express.json());
 // Rutas de empleado, usando un prefijo (por ejemplo, "/api/empleado")
 app.use("/api/empleado", empleadoRoutes);
 
-
+app.use(express.json());
 
 // app.use(cors()); eso lo tengo que habilitar y borrar hasta el proximo comentario
 app.use(cors({
@@ -25,7 +25,7 @@ app.use(cors({
   }));
 // 
 
-app.use(express.json());
+
 const authRoutes = require("./routes/auth");
 app.use("/api/auth", authRoutes);
 app.use("/api/clientes", clientesRoutes);
