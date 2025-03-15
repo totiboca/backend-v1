@@ -13,7 +13,18 @@ app.use("/api/empleado", empleadoRoutes);
 
 
 
-app.use(cors());
+// app.use(cors()); eso lo tengo que habilitar y borrar hasta el proximo comentario
+app.use(cors({
+    origin: [
+      "http://localhost:3000",                 // Si pruebas en local
+      "https://empleado-bandejas-production.up.railway.app", // O la URL de tu frontend en producción
+      "https://frontend-clientes-production.up.railway.app"   // Si tienes otro frontend
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+  }));
+// 
+
 app.use(express.json());
 const authRoutes = require("./routes/auth");
 app.use("/api/auth", authRoutes);
