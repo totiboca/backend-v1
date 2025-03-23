@@ -7,6 +7,9 @@ const empleadoRoutes = require("./routes/empleado");
 const app = express();
 // Middleware para parsear JSON
 
+const movimientosRoutes = require("./routes/movimientos");
+app.use("/movimientos", movimientosRoutes);
+
 
 
 
@@ -39,13 +42,13 @@ app.use("/api/auth", authRoutes);
 app.use("/api/clientes", clientesRoutes);
 
 
-// Ruta a la carpeta de tu build
-app.use(express.static(path.join(__dirname, '../frontend/build')));
+// // Ruta a la carpeta de tu build- activar para servidor
+// app.use(express.static(path.join(__dirname, '../frontend/build')));
 
-// Para manejar rutas tipo SPA (React Router):
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
-});
+// // Para manejar rutas tipo SPA (React Router):
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+// });
 
 
 const PORT = process.env.PORT || 5000;
