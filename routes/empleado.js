@@ -200,12 +200,20 @@ router.post("/cargar-bandejas", authenticateToken, async (req, res) => {
     const ID_RUTA = parseInt(id_ruta);
     const valorLleva = parseInt(lleva);
     const valorTrae = parseInt(trae);
-    const fechaRemito = new Date(fecha_remito);
+    const fechaRemitoString = `${fecha_remito}T12:00:00`;
+    const fechaRemito = new Date(fechaRemitoString);
     // Si n_remito viene vacío, se guarda como null
     const numeroRemito = n_remito && n_remito.toString().trim() !== "" ? parseInt(n_remito) : null;
 
        // Asignar la fecha y hora actuales para la carga
-       const fechaCarga = new Date();
+       // Obtener la fecha de hoy en formato YYYY-MM-DD
+const today = new Date();
+const yyyy = today.getFullYear();
+const mm = ("0" + (today.getMonth() + 1)).slice(-2);
+const dd = ("0" + today.getDate()).slice(-2);
+const fechaCargaString = `${yyyy}-${mm}-${dd}T12:00:00`;
+const fechaCarga = new Date(fechaCargaString);
+
 
 
     // Insertamos el movimiento en la tabla "movimientos"

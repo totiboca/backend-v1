@@ -12,10 +12,10 @@ router.get("/saldo", authenticateToken, async (req, res) => {
         const [[result]] = await pool.query(`
             SELECT 
                 (SELECT COALESCE(SUM(m.lleva), 0) FROM movimientos m
-                 JOIN rutas r ON m.ID_RUTA = r.id_ruta WHERE r.id_cliente = ?) 
+                 JOIN RUTAS r ON m.ID_RUTA = r.id_ruta WHERE r.id_cliente = ?) 
                 -
                 (SELECT COALESCE(SUM(m.trae), 0) FROM movimientos m
-                 JOIN rutas r ON m.ID_RUTA = r.id_ruta WHERE r.id_cliente = ?) 
+                 JOIN RUTAS r ON m.ID_RUTA = r.id_ruta WHERE r.id_cliente = ?) 
                 AS saldo;
         `, [id_cliente, id_cliente]);
 
@@ -77,7 +77,7 @@ router.get("/movimientos", authenticateToken, async (req, res) => {
             query = `
                 SELECT r.id_ruta, DATE_FORMAT(m.fecha_remito, '%Y-%m-%d') AS fecha, m.lleva, m.trae
                 FROM movimientos m
-                JOIN rutas r ON m.ID_RUTA = r.id_ruta
+                JOIN RUTAS r ON m.ID_RUTA = r.id_ruta
                 WHERE r.id_cliente = ?
                 ORDER BY r.id_ruta, m.fecha_remito;
             `;
@@ -88,7 +88,7 @@ router.get("/movimientos", authenticateToken, async (req, res) => {
             query = `
                 SELECT r.id_ruta, DATE_FORMAT(m.fecha_remito, '%Y-%m-%d') AS fecha, m.lleva, m.trae
                 FROM movimientos m
-                JOIN rutas r ON m.ID_RUTA = r.id_ruta
+                JOIN RUTAS r ON m.ID_RUTA = r.id_ruta
                 WHERE r.id_fletero = ?
                 ORDER BY r.id_ruta, m.fecha_remito;
             `;
@@ -99,7 +99,7 @@ router.get("/movimientos", authenticateToken, async (req, res) => {
             query = `
                 SELECT r.id_ruta, DATE_FORMAT(m.fecha_remito, '%Y-%m-%d') AS fecha, m.lleva, m.trae
                 FROM movimientos m
-                JOIN rutas r ON m.ID_RUTA = r.id_ruta
+                JOIN RUTAS r ON m.ID_RUTA = r.id_ruta
                 WHERE r.id_cliente = ? OR r.id_fletero = ?
                 ORDER BY r.id_ruta, m.fecha_remito;
             `;
