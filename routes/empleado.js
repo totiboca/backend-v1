@@ -495,7 +495,7 @@ router.get("/saldos-mes", async (req, res) => {
 
 router.put("/movimientos/:id", async (req, res) => {
   const { id } = req.params;
-  const { fecha_remito, lleva, trae, n_remito } = req.body;
+  const { fecha_remito, lleva, trae, n_remito,fecha_carga } = req.body;
 
   // Puedes agregar validaciones: por ejemplo, que fecha_remito y lleva/trae sean válidos.
   if (!fecha_remito || typeof lleva === "undefined" || typeof trae === "undefined") {
@@ -508,10 +508,11 @@ router.put("/movimientos/:id", async (req, res) => {
       SET fecha_remito = ?, 
           lleva = ?, 
           trae = ?, 
-          n_remito = ?
+          n_remito = ?,
+          fecha_carga = ?
       WHERE id_movimiento = ?
     `;
-    const params = [new Date(fecha_remito), lleva, trae, n_remito || null, id];
+    const params = [new Date(fecha_remito), lleva, trae, n_remito, fecha_carga || null, id];
     const [result] = await pool.query(sql, params);
 
     if (result.affectedRows === 0) {

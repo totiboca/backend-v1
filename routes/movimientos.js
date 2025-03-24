@@ -24,7 +24,7 @@ router.post("/import_csv", upload.single("file"), (req, res) => {
   const results = [];
   // Usamos csv-parser y especificamos los headers manualmente, ya que el archivo tendrá 5 columnas sin encabezado
   fs.createReadStream(req.file.path)
-    .pipe(csv({ headers: ['id_ruta', 'lleva', 'trae', 'fecha_remito', 'n_remito','fecha_carga' ] }))
+    .pipe(csv({ headers: ['id_ruta', 'lleva', 'trae', 'fecha_remito', 'n_remito','fecha_carga'] }))
     .on("data", (data) => results.push(data))
     .on("end", async () => {
       try {
