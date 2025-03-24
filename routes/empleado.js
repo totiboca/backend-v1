@@ -271,7 +271,7 @@ router.get("/saldos", async (req, res) => {
       SUM(m.lleva) AS totalCarga,
       SUM(m.trae) AS totalDevolucion,
       (SUM(m.lleva) - SUM(m.trae)) AS saldoTotal
-    FROM rutas r
+    FROM RUTAS r
     JOIN fletero f ON r.id_fletero = f.id_fletero
     JOIN movimientos m ON m.id_ruta = r.id_ruta
     WHERE 1=1
@@ -394,7 +394,7 @@ router.get("/saldos-ciudad", async (req, res) => {
       SUM(m.lleva) AS totalCarga,
       SUM(m.trae) AS totalDevolucion,
       (SUM(m.lleva) - SUM(m.trae)) AS saldoTotal
-    FROM rutas r
+    FROM RUTAS r
     JOIN movimientos m ON m.id_ruta = r.id_ruta
     GROUP BY r.ciudad
     ORDER BY saldoTotal DESC
@@ -545,7 +545,7 @@ router.get("/movimientos", async (req, res) => {
       m.id_ruta,
       r.nombre_ruta AS nombre_cliente
     FROM movimientos m
-    JOIN rutas r ON m.id_ruta = r.id_ruta
+    JOIN RUTAS r ON m.id_ruta = r.id_ruta
     JOIN cliente c ON r.id_cliente = c.id_cliente
     JOIN fletero f ON r.id_fletero = f.id_fletero
     WHERE 1=1
