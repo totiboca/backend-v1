@@ -442,7 +442,7 @@ router.get("/saldos-mes", async (req, res) => {
     SELECT
       ${selectFields}
     FROM movimientos m
-    LEFT JOIN rutas r ON m.id_ruta = r.id_ruta
+    LEFT JOIN RUTAS r ON m.id_ruta = r.id_ruta
     WHERE 1=1
   `;
   const params = [];
