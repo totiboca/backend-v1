@@ -24,7 +24,7 @@ router.post("/import_csv", upload.single("file"), (req, res) => {
   const results = [];
   // Usamos csv-parser y especificamos los headers manualmente, ya que el archivo tendrá 5 columnas sin encabezado
   fs.createReadStream(req.file.path)
-    .pipe(csv({ headers: ['id_ruta', 'lleva', 'trae', 'fecha_remito', 'n_remito'] }))
+    .pipe(csv({ headers: ['id_ruta', 'lleva', 'trae', 'fecha_remito', 'n_remito','fecha_carga' ] }))
     .on("data", (data) => results.push(data))
     .on("end", async () => {
       try {
@@ -41,11 +41,12 @@ router.post("/import_csv", upload.single("file"), (req, res) => {
           const fecha_remito = new Date(row.fecha_remito);
           // La quinta columna se asigna a "n_remito"; si está vacía, se asigna null
           const n_remito = row.n_remito && row.n_remito.trim() !== '' ? row.n_remito : null;
+          const fecha_carga = new Date(row.fecha_carga);
 
           // Insertamos cada registro en la tabla "movimientos"
           await pool.query(
-            "INSERT INTO movimientos (id_ruta, lleva, trae, fecha_remito, n_remito) VALUES (?, ?, ?, ?, ?)",
-            [id_ruta, lleva, trae, fecha_remito, n_remito]
+            "INSERT INTO movimientos (id_ruta, lleva, trae, fecha_remito, n_remito, fecha_carga) VALUES (?, ?, ?, ?, ?, ?)",
+            [id_ruta, lleva, trae, fecha_remito, n_remito, fecha_carga]
           );
           count++; // Incrementamos el contador de registros insertados
         }
