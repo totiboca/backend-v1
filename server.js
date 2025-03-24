@@ -51,6 +51,13 @@ app.use("/api/clientes", clientesRoutes);
 // });
 
 
+// app.use(express.static(path.join(__dirname, "build")));  Lo desactive para subir el backend a render
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "build", "index.html"));
+// });
+
+
+
 const PORT = process.env.PORT || 5000;
 app._router.stack.forEach((r) => {
     if (r.route && r.route.path) {
@@ -59,13 +66,9 @@ app._router.stack.forEach((r) => {
 });
 
 
-// app.use(express.static(path.join(__dirname, "build")));  Lo desactive para subir el backend a render
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(__dirname, "build", "index.html"));
-// });
-
-
-
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
+
+
