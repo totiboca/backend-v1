@@ -107,7 +107,7 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
   fs.createReadStream(req.file.path)
     .pipe(csv({ 
       separator: ';', // Si usas ';'
-      headers: ["ID_RUTA", "lleva", "trae", "fecha_remito", "n_remito", "fecha_carga"]
+      headers: ["ID_RUTA", "lleva", "trae", "fecha_remito", "n_remito"]
     }))
     .on("data", (data) => {
       results.push(data);
@@ -123,7 +123,12 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
           const numeroRemito = row.n_remito && row.n_remito.trim() !== ""
         ? parseInt(row.n_remito, 10)
         : 0;
-        const fechaCarga = row.fecha_carga ? new Date(row.fecha_carga) : null; 
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = ("0" + (today.getMonth() + 1)).slice(-2);
+        const dd = ("0" + today.getDate()).slice(-2);
+        const fechaCargaString = `${yyyy}-${mm}-${dd}T12:00:00`;
+        const fechaCarga = new Date(fechaCargaString); 
 
         // Si parseInt da NaN, lo forzamos a 0
           if (isNaN(numeroRemito)) {
