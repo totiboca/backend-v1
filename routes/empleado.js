@@ -175,7 +175,19 @@ router.get("/upload-history", async (req, res) => {
   }
 });
 
+// Elimina todos los registros de la tabla 'movimientos'
+router.delete("/movimientos/all", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM movimientos"); 
 
+    await pool.query("DELETE FROM upload_history");
+    // O TRUNCATE TABLE movimientos (si tienes permisos y quieres vaciarla por completo)
+    res.json({ msg: "Se han borrado todos los registros de movimientos" });
+  } catch (error) {
+    console.error("Error al borrar todos los movimientos:", error);
+    res.status(500).json({ error: "Error al borrar todos los movimientos" });
+  }
+});
 
 
 
