@@ -124,10 +124,10 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
         ? parseInt(row.n_remito, 10)
         : 0;
         const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = ("0" + (today.getMonth() + 1)).slice(-2);
-        const dd = ("0" + today.getDate()).slice(-2);
-        const fechaCargaString = `${yyyy}-${mm}-${dd}T12:00:00`;
+          const yyyy = today.getFullYear();
+          const mm = ("0" + (today.getMonth() + 1)).slice(-2);
+          const dd = ("0" + today.getDate()).slice(-2);
+          const fechaCargaString = `${yyyy}-${mm}-${dd}`;
         const fechaCarga = new Date(fechaCargaString); 
 
         // Si parseInt da NaN, lo forzamos a 0
@@ -206,7 +206,7 @@ router.post("/cargar-bandejas", authenticateToken, async (req, res) => {
     const ID_RUTA = parseInt(id_ruta);
     const valorLleva = parseInt(lleva);
     const valorTrae = parseInt(trae);
-    const fechaRemitoString = `${fecha_remito}T12:00:00`;
+    const fechaRemitoString = `${fecha_remito}`;
     const fechaRemito = new Date(fechaRemitoString);
     // Si n_remito viene vacío, se guarda como null
     const numeroRemito = n_remito && n_remito.toString().trim() !== "" ? parseInt(n_remito) : null;
@@ -217,7 +217,7 @@ const today = new Date();
 const yyyy = today.getFullYear();
 const mm = ("0" + (today.getMonth() + 1)).slice(-2);
 const dd = ("0" + today.getDate()).slice(-2);
-const fechaCargaString = `${yyyy}-${mm}-${dd}T12:00:00`;
+const fechaCargaString = `${yyyy}-${mm}-${dd}`;
 const fechaCarga = new Date(fechaCargaString);
 
 
