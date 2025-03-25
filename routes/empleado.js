@@ -120,10 +120,10 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
           const valorLleva = row.lleva && row.lleva.trim() !== "" ? parseInt(row.lleva) : 0;
           const valorTrae = row.trae && row.trae.trim() !== "" ? parseInt(row.trae) : 0;
           const fechaRemito = row.fecha_remito ? new Date(row.fecha_remito) : null;
-          const numeroRemito = row.n_remito && row.n_remito.trim() !== "",
-          const fechaCarga = row.fecha_carga ? new Date(row.fecha_carga) : null
+          const numeroRemito = row.n_remito && row.n_remito.trim() !== ""
         ? parseInt(row.n_remito, 10)
-        : 0;  
+        : 0;
+        const fechaCarga = row.fecha_carga ? new Date(row.fecha_carga) : null; 
 
         // Si parseInt da NaN, lo forzamos a 0
           if (isNaN(numeroRemito)) {
