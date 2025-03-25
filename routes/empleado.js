@@ -107,7 +107,7 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
   fs.createReadStream(req.file.path)
     .pipe(csv({ 
       separator: ';', // Si usas ';'
-      headers: ["ID_RUTA", "lleva", "trae", "fecha_remito", "n_remito"]
+      headers: ["ID_RUTA", "lleva", "trae", "fecha_remito", "n_remito", "fecha_carga"]
     }))
     .on("data", (data) => {
       results.push(data);
@@ -120,7 +120,8 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
           const valorLleva = row.lleva && row.lleva.trim() !== "" ? parseInt(row.lleva) : 0;
           const valorTrae = row.trae && row.trae.trim() !== "" ? parseInt(row.trae) : 0;
           const fechaRemito = row.fecha_remito ? new Date(row.fecha_remito) : null;
-          const numeroRemito = row.n_remito && row.n_remito.trim() !== ""
+          const numeroRemito = row.n_remito && row.n_remito.trim() !== "",
+          const fechaCarga = row.fecha_carga ? new Date(row.fecha_carga) : null
         ? parseInt(row.n_remito, 10)
         : 0;  
 
@@ -130,8 +131,8 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
            }
 
           await pool.query(
-            "INSERT INTO movimientos (ID_RUTA, lleva, trae, fecha_remito, n_remito) VALUES (?, ?, ?, ?, ?)",
-            [ID_RUTA, valorLleva, valorTrae, fechaRemito, numeroRemito]
+            "INSERT INTO movimientos (ID_RUTA, lleva, trae, fecha_remito, n_remito, fecha_carga) VALUES (?, ?, ?, ?, ?, ?)",
+            [ID_RUTA, valorLleva, valorTrae, fechaRemito, numeroRemito,fechaCarga]
           );
           count++;
         }
