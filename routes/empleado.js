@@ -516,7 +516,7 @@ router.put("/movimientos/:id", async (req, res) => {
   const { fecha_remito, lleva, trae, n_remito,fecha_carga } = req.body;
 
   // Puedes agregar validaciones: por ejemplo, que fecha_remito y lleva/trae sean válidos.
-  if (!fecha_remito || typeof lleva === "undefined" || typeof trae === "undefined") {
+  if (!fecha_remito || !fecha_carga || typeof lleva === "undefined" || typeof trae === "undefined") {
     return res.status(400).json({ error: "Faltan campos requeridos" });
   }
 
