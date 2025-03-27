@@ -206,12 +206,13 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
 
 
 
-// // Endpoint para cargar CSV con 5 columnas
+// // Endpoint para cargar CSV con validaciones y bulk insert
 // router.post("/cargar-csv", upload.single("file"), async (req, res) => {
 //   if (!req.file) {
 //     return res.status(400).json({ error: "No se encontró el archivo en la solicitud" });
 //   }
 
+//   // Verificamos que la extensión sea CSV
 //   if (path.extname(req.file.originalname).toLowerCase() !== ".csv") {
 //     return res.status(400).json({ error: "Tipo de archivo no permitido" });
 //   }
@@ -219,60 +220,98 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
 //   const results = [];
 //   fs.createReadStream(req.file.path)
 //     .pipe(csv({ 
-//       separator: ';', // Si usas ';'
+//       separator: ';', // Ajusta el separador según tu archivo (',' si es por comas)
 //       headers: ["ID_RUTA", "lleva", "trae", "fecha_remito", "n_remito"]
 //     }))
-//     .on("data", (data) => {
-//       results.push(data);
-//     })
+//     .on("data", (data) => results.push(data))
 //     .on("end", async () => {
 //       try {
-//         let count = 0; // Contador de filas importadas
+//         // Pre-cargar las rutas válidas de la tabla 'rutas'
+//         const [validRoutes] = await pool.query("SELECT id_ruta FROM rutas");
+//         const validRouteSet = new Set(validRoutes.map(r => r.id_ruta));
+
+//         let count = 0;       // Número de filas importadas
+//         let notImported = 0; // Número de filas descartadas por error
+//         let insertRows = [];
+
+//         // Recorrer cada fila del CSV
 //         for (const row of results) {
-//           const ID_RUTA = parseInt(row.ID_RUTA);
-//           const valorLleva = row.lleva && row.lleva.trim() !== "" ? parseInt(row.lleva) : 0;
-//           const valorTrae = row.trae && row.trae.trim() !== "" ? parseInt(row.trae) : 0;
+//           // Validar ID_RUTA
+//           const ID_RUTA = parseInt(row.ID_RUTA, 10);
+//           if (isNaN(ID_RUTA) || ID_RUTA <= 0 || !validRouteSet.has(ID_RUTA)) {
+//             notImported++;
+//             continue;
+//           }
+
+//           // Convertir 'lleva' y 'trae'. Si no se pueden convertir (por ejemplo, si son un guion u otro carácter), se asigna 0.
+//           const parsedLleva = parseInt(row.lleva, 10);
+//           const valorLleva = isNaN(parsedLleva) ? 0 : parsedLleva;
+
+//           const parsedTrae = parseInt(row.trae, 10);
+//           const valorTrae = isNaN(parsedTrae) ? 0 : parsedTrae;
+
+//           // Si ambos son 0, no tiene sentido importar la fila
+//           if (valorLleva === 0 && valorTrae === 0) {
+//             notImported++;
+//             continue;
+//           }
+
+//           // Parsear la fecha de remito; se espera el formato "YYYY-MM-DD"
 //           const fechaRemito = row.fecha_remito ? new Date(row.fecha_remito) : null;
-//           const numeroRemito = row.n_remito && row.n_remito.trim() !== ""
-//         ? parseInt(row.n_remito, 10)
-//         : 0;
-//         const today = new Date();
+
+//           // Parsear 'n_remito'
+//           let numeroRemito = row.n_remito && row.n_remito.trim() !== ""
+//             ? parseInt(row.n_remito, 10)
+//             : 0;
+//           if (isNaN(numeroRemito)) {
+//             numeroRemito = 0;
+//           }
+
+//           // Establecer 'fecha_carga' como la fecha actual
+//           const today = new Date();
 //           const yyyy = today.getFullYear();
 //           const mm = ("0" + (today.getMonth() + 1)).slice(-2);
 //           const dd = ("0" + today.getDate()).slice(-2);
 //           const fechaCargaString = `${yyyy}-${mm}-${dd}`;
-//         const fechaCarga = new Date(fechaCargaString); 
+//           const fechaCarga = new Date(fechaCargaString);
 
-//         // Si parseInt da NaN, lo forzamos a 0
-//           if (isNaN(numeroRemito)) {
-//             numeroRemito = 0;
-//            }
-
-//           await pool.query(
-//             "INSERT INTO movimientos (ID_RUTA, lleva, trae, fecha_remito, n_remito, fecha_carga) VALUES (?, ?, ?, ?, ?, ?)",
-//             [ID_RUTA, valorLleva, valorTrae, fechaRemito, numeroRemito,fechaCarga]
-//           );
-//           count++;
+//           // Acumular la fila válida para inserción en bloque
+//           insertRows.push([ID_RUTA, valorLleva, valorTrae, fechaRemito, numeroRemito, fechaCarga]);
 //         }
 
+//         // Realizar la inserción en lote si hay filas válidas
+//         if (insertRows.length > 0) {
+//           await pool.query(
+//             "INSERT INTO movimientos (ID_RUTA, lleva, trae, fecha_remito, n_remito, fecha_carga) VALUES ?",
+//             [insertRows]
+//           );
+//         }
+
+//         // Eliminar el archivo temporal
 //         fs.unlinkSync(req.file.path);
 
-//         // Insertar el registro en la tabla de historial de subidas
+//         // Preparar el mensaje final
+//         let estado = "OK";
+//         let message = `Datos importados correctamente, se importaron ${insertRows.length} registros.`;
+//         if (notImported > 0) {
+//           estado = "Con errores";
+//           message = `Se importaron ${insertRows.length} registros correctamente. Hubo ${notImported} registros con errores y no se importaron.`;
+//         }
+
+//         // Registrar en la tabla 'upload_history'
 //         await pool.query(
 //           "INSERT INTO upload_history (nombreArchivo, cantidad, estado) VALUES (?, ?, ?)",
-//           [req.file.originalname, count, "OK"]
+//           [req.file.originalname, insertRows.length, estado]
 //         );
 
-//         res.json({ msg: `Datos importados correctamente, se importaron ${count} registros` });
+//         res.json({ msg: message });
 //       } catch (error) {
 //         console.error("Error al procesar el CSV:", error);
-
-//         // En caso de error, también registramos en el historial
+//         // En caso de error, registrar en el historial con estado "Fallo"
 //         await pool.query(
 //           "INSERT INTO upload_history (nombreArchivo, cantidad, estado) VALUES (?, ?, ?)",
 //           [req.file.originalname, 0, "Fallo"]
 //         );
-
 //         res.status(500).json({ error: "Error al procesar el CSV", details: error.message });
 //       }
 //     });
