@@ -93,11 +93,13 @@ router.post("/login", async (req, res) => {
 // Configuración de multer para guardar el archivo temporalmente en "uploads/"
 const upload = multer({ dest: "uploads/" });
 
+// Endpoint para cargar CSV con 5 columnas (actualizado para validar lleva/trae y existencia de la ruta)
 router.post("/cargar-csv", upload.single("file"), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No se encontró el archivo en la solicitud" });
   }
 
+  // Asegurarse de que la extensión sea CSV (ajusta el separador si tu archivo usa comas)
   if (path.extname(req.file.originalname).toLowerCase() !== ".csv") {
     return res.status(400).json({ error: "Tipo de archivo no permitido" });
   }
@@ -105,7 +107,7 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
   const results = [];
   fs.createReadStream(req.file.path)
     .pipe(csv({ 
-      separator: ';', // Si tu CSV usa ';' como separador
+      separator: ';', // Si tu CSV usa ';', de lo contrario, usa ',' o quita el parámetro.
       headers: ["ID_RUTA", "lleva", "trae", "fecha_remito", "n_remito"]
     }))
     .on("data", (data) => {
@@ -113,32 +115,43 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
     })
     .on("end", async () => {
       try {
-        let count = 0;          // Contador de filas importadas
-        let notImported = 0;    // Contador de filas no importadas
+        let count = 0;       // Registros importados correctamente
+        let notImported = 0; // Registros no importados por error de validación
 
+        // Iterar por cada fila del CSV
         for (const row of results) {
-          // 1. Parsear y validar ID_RUTA
-          const ID_RUTA = parseInt(row.ID_RUTA);
+          // Validar y parsear ID_RUTA
+          const ID_RUTA = parseInt(row.ID_RUTA, 10);
           if (isNaN(ID_RUTA) || ID_RUTA <= 0) {
-            // ID_RUTA inválido => no se importa
             notImported++;
             continue;
           }
 
-          // 2. Parsear y validar lleva / trae
-          const valorLleva = row.lleva && row.lleva.trim() !== "" ? parseInt(row.lleva) : 0;
-          const valorTrae = row.trae && row.trae.trim() !== "" ? parseInt(row.trae) : 0;
-          
-          // Si ambos son 0 => no se importa
+          // Verificar si la ruta existe en la tabla "rutas"
+          const [rutas] = await pool.query("SELECT * FROM rutas WHERE id_ruta = ?", [ID_RUTA]);
+          if (rutas.length === 0) {
+            // La ruta no existe, se omite este registro
+            notImported++;
+            continue;
+          }
+
+          // Para 'lleva' y 'trae', si el valor no se puede convertir a número (por ejemplo, es un guion o tiene letras), se asigna 0.
+          const parsedLleva = parseInt(row.lleva, 10);
+          const valorLleva = isNaN(parsedLleva) ? 0 : parsedLleva;
+
+          const parsedTrae = parseInt(row.trae, 10);
+          const valorTrae = isNaN(parsedTrae) ? 0 : parsedTrae;
+
+          // Si ambos son 0, consideramos que no tiene sentido importar esa fila
           if (valorLleva === 0 && valorTrae === 0) {
             notImported++;
             continue;
           }
 
-          // 3. fecha_remito
+          // Parsear la fecha de remito (se espera en formato YYYY-MM-DD)
           const fechaRemito = row.fecha_remito ? new Date(row.fecha_remito) : null;
 
-          // 4. n_remito (si es NaN, lo forzamos a 0)
+          // Para 'n_remito'
           let numeroRemito = row.n_remito && row.n_remito.trim() !== ""
             ? parseInt(row.n_remito, 10)
             : 0;
@@ -146,7 +159,7 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
             numeroRemito = 0;
           }
 
-          // 5. fecha_carga = fecha actual (YYYY-MM-DD)
+          // Para 'fecha_carga', asignamos la fecha actual (en formato YYYY-MM-DD)
           const today = new Date();
           const yyyy = today.getFullYear();
           const mm = ("0" + (today.getMonth() + 1)).slice(-2);
@@ -154,7 +167,7 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
           const fechaCargaString = `${yyyy}-${mm}-${dd}`;
           const fechaCarga = new Date(fechaCargaString);
 
-          // 6. Insertar en la tabla 'movimientos'
+          // Insertar la fila válida en la tabla "movimientos"
           await pool.query(
             "INSERT INTO movimientos (ID_RUTA, lleva, trae, fecha_remito, n_remito, fecha_carga) VALUES (?, ?, ?, ?, ?, ?)",
             [ID_RUTA, valorLleva, valorTrae, fechaRemito, numeroRemito, fechaCarga]
@@ -162,35 +175,30 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
           count++;
         }
 
-        // Borrar archivo temporal
         fs.unlinkSync(req.file.path);
 
-        // 7. Insertar el registro en la tabla 'upload_history'
-        // Si hubo filas no importadas, ponemos estado="Con errores", sino "OK"
+        // Definir estado y mensaje final según si hubo filas no importadas
         let estado = "OK";
         let message = `Datos importados correctamente, se importaron ${count} registros.`;
-
         if (notImported > 0) {
           estado = "Con errores";
           message = `Se importaron ${count} registros correctamente. Hubo ${notImported} registros con errores y no se importaron.`;
         }
 
+        // Registrar en upload_history
         await pool.query(
           "INSERT INTO upload_history (nombreArchivo, cantidad, estado) VALUES (?, ?, ?)",
           [req.file.originalname, count, estado]
         );
 
-        // 8. Responder con el mensaje final
         res.json({ msg: message });
       } catch (error) {
         console.error("Error al procesar el CSV:", error);
-
-        // Registrar en historial con 0 si falló todo
+        // Registrar en el historial con estado "Fallo"
         await pool.query(
           "INSERT INTO upload_history (nombreArchivo, cantidad, estado) VALUES (?, ?, ?)",
           [req.file.originalname, 0, "Fallo"]
         );
-
         res.status(500).json({ error: "Error al procesar el CSV", details: error.message });
       }
     });
