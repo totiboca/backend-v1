@@ -93,112 +93,6 @@ router.post("/login", async (req, res) => {
 // Configuración de multer para guardar el archivo temporalmente en "uploads/"
 const upload = multer({ dest: "uploads/" });
 
-router.post("/cargar-csv", upload.single("file"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No se encontró el archivo en la solicitud" });
-  }
-
-  if (path.extname(req.file.originalname).toLowerCase() !== ".csv") {
-    return res.status(400).json({ error: "Tipo de archivo no permitido" });
-  }
-
-  const results = [];
-  fs.createReadStream(req.file.path)
-    .pipe(csv({ 
-      separator: ';', // Si tu CSV usa ';' como separador
-      headers: ["ID_RUTA", "lleva", "trae", "fecha_remito", "n_remito"]
-    }))
-    .on("data", (data) => {
-      results.push(data);
-    })
-    .on("end", async () => {
-      try {
-        let count = 0;          // Contador de filas importadas
-        let notImported = 0;    // Contador de filas no importadas
-
-        for (const row of results) {
-          // 1. Parsear y validar ID_RUTA
-          const ID_RUTA = parseInt(row.ID_RUTA);
-          if (isNaN(ID_RUTA) || ID_RUTA <= 0) {
-            // ID_RUTA inválido => no se importa
-            notImported++;
-            continue;
-          }
-
-          // 2. Parsear y validar lleva / trae
-          const valorLleva = row.lleva && row.lleva.trim() !== "" ? parseInt(row.lleva) : 0;
-          const valorTrae = row.trae && row.trae.trim() !== "" ? parseInt(row.trae) : 0;
-          
-          // Si ambos son 0 => no se importa
-          if (valorLleva === 0 && valorTrae === 0) {
-            notImported++;
-            continue;
-          }
-
-          // 3. fecha_remito
-          const fechaRemito = row.fecha_remito ? new Date(row.fecha_remito) : null;
-
-          // 4. n_remito (si es NaN, lo forzamos a 0)
-          let numeroRemito = row.n_remito && row.n_remito.trim() !== ""
-            ? parseInt(row.n_remito, 10)
-            : 0;
-          if (isNaN(numeroRemito)) {
-            numeroRemito = 0;
-          }
-
-          // 5. fecha_carga = fecha actual (YYYY-MM-DD)
-          const today = new Date();
-          const yyyy = today.getFullYear();
-          const mm = ("0" + (today.getMonth() + 1)).slice(-2);
-          const dd = ("0" + today.getDate()).slice(-2);
-          const fechaCargaString = `${yyyy}-${mm}-${dd}`;
-          const fechaCarga = new Date(fechaCargaString);
-
-          // 6. Insertar en la tabla 'movimientos'
-          await pool.query(
-            "INSERT INTO movimientos (ID_RUTA, lleva, trae, fecha_remito, n_remito, fecha_carga) VALUES (?, ?, ?, ?, ?, ?)",
-            [ID_RUTA, valorLleva, valorTrae, fechaRemito, numeroRemito, fechaCarga]
-          );
-          count++;
-        }
-
-        // Borrar archivo temporal
-        fs.unlinkSync(req.file.path);
-
-        // 7. Insertar el registro en la tabla 'upload_history'
-        // Si hubo filas no importadas, ponemos estado="Con errores", sino "OK"
-        let estado = "OK";
-        let message = `Datos importados correctamente, se importaron ${count} registros.`;
-
-        if (notImported > 0) {
-          estado = "Con errores";
-          message = `Se importaron ${count} registros correctamente. Hubo ${notImported} registros con errores y no se importaron.`;
-        }
-
-        await pool.query(
-          "INSERT INTO upload_history (nombreArchivo, cantidad, estado) VALUES (?, ?, ?)",
-          [req.file.originalname, count, estado]
-        );
-
-        // 8. Responder con el mensaje final
-        res.json({ msg: message });
-      } catch (error) {
-        console.error("Error al procesar el CSV:", error);
-
-        // Registrar en historial con 0 si falló todo
-        await pool.query(
-          "INSERT INTO upload_history (nombreArchivo, cantidad, estado) VALUES (?, ?, ?)",
-          [req.file.originalname, 0, "Fallo"]
-        );
-
-        res.status(500).json({ error: "Error al procesar el CSV", details: error.message });
-      }
-    });
-});
-
-
-
-// // Endpoint para cargar CSV con 5 columnas
 // router.post("/cargar-csv", upload.single("file"), async (req, res) => {
 //   if (!req.file) {
 //     return res.status(400).json({ error: "No se encontró el archivo en la solicitud" });
@@ -211,7 +105,7 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
 //   const results = [];
 //   fs.createReadStream(req.file.path)
 //     .pipe(csv({ 
-//       separator: ';', // Si usas ';'
+//       separator: ';', // Si tu CSV usa ';' como separador
 //       headers: ["ID_RUTA", "lleva", "trae", "fecha_remito", "n_remito"]
 //     }))
 //     .on("data", (data) => {
@@ -219,47 +113,79 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
 //     })
 //     .on("end", async () => {
 //       try {
-//         let count = 0; // Contador de filas importadas
+//         let count = 0;          // Contador de filas importadas
+//         let notImported = 0;    // Contador de filas no importadas
+
 //         for (const row of results) {
+//           // 1. Parsear y validar ID_RUTA
 //           const ID_RUTA = parseInt(row.ID_RUTA);
+//           if (isNaN(ID_RUTA) || ID_RUTA <= 0) {
+//             // ID_RUTA inválido => no se importa
+//             notImported++;
+//             continue;
+//           }
+
+//           // 2. Parsear y validar lleva / trae
 //           const valorLleva = row.lleva && row.lleva.trim() !== "" ? parseInt(row.lleva) : 0;
 //           const valorTrae = row.trae && row.trae.trim() !== "" ? parseInt(row.trae) : 0;
+          
+//           // Si ambos son 0 => no se importa
+//           if (valorLleva === 0 && valorTrae === 0) {
+//             notImported++;
+//             continue;
+//           }
+
+//           // 3. fecha_remito
 //           const fechaRemito = row.fecha_remito ? new Date(row.fecha_remito) : null;
-//           const numeroRemito = row.n_remito && row.n_remito.trim() !== ""
-//         ? parseInt(row.n_remito, 10)
-//         : 0;
-//         const today = new Date();
+
+//           // 4. n_remito (si es NaN, lo forzamos a 0)
+//           let numeroRemito = row.n_remito && row.n_remito.trim() !== ""
+//             ? parseInt(row.n_remito, 10)
+//             : 0;
+//           if (isNaN(numeroRemito)) {
+//             numeroRemito = 0;
+//           }
+
+//           // 5. fecha_carga = fecha actual (YYYY-MM-DD)
+//           const today = new Date();
 //           const yyyy = today.getFullYear();
 //           const mm = ("0" + (today.getMonth() + 1)).slice(-2);
 //           const dd = ("0" + today.getDate()).slice(-2);
 //           const fechaCargaString = `${yyyy}-${mm}-${dd}`;
-//         const fechaCarga = new Date(fechaCargaString); 
+//           const fechaCarga = new Date(fechaCargaString);
 
-//         // Si parseInt da NaN, lo forzamos a 0
-//           if (isNaN(numeroRemito)) {
-//             numeroRemito = 0;
-//            }
-
+//           // 6. Insertar en la tabla 'movimientos'
 //           await pool.query(
 //             "INSERT INTO movimientos (ID_RUTA, lleva, trae, fecha_remito, n_remito, fecha_carga) VALUES (?, ?, ?, ?, ?, ?)",
-//             [ID_RUTA, valorLleva, valorTrae, fechaRemito, numeroRemito,fechaCarga]
+//             [ID_RUTA, valorLleva, valorTrae, fechaRemito, numeroRemito, fechaCarga]
 //           );
 //           count++;
 //         }
 
+//         // Borrar archivo temporal
 //         fs.unlinkSync(req.file.path);
 
-//         // Insertar el registro en la tabla de historial de subidas
+//         // 7. Insertar el registro en la tabla 'upload_history'
+//         // Si hubo filas no importadas, ponemos estado="Con errores", sino "OK"
+//         let estado = "OK";
+//         let message = `Datos importados correctamente, se importaron ${count} registros.`;
+
+//         if (notImported > 0) {
+//           estado = "Con errores";
+//           message = `Se importaron ${count} registros correctamente. Hubo ${notImported} registros con errores y no se importaron.`;
+//         }
+
 //         await pool.query(
 //           "INSERT INTO upload_history (nombreArchivo, cantidad, estado) VALUES (?, ?, ?)",
-//           [req.file.originalname, count, "OK"]
+//           [req.file.originalname, count, estado]
 //         );
 
-//         res.json({ msg: `Datos importados correctamente, se importaron ${count} registros` });
+//         // 8. Responder con el mensaje final
+//         res.json({ msg: message });
 //       } catch (error) {
 //         console.error("Error al procesar el CSV:", error);
 
-//         // En caso de error, también registramos en el historial
+//         // Registrar en historial con 0 si falló todo
 //         await pool.query(
 //           "INSERT INTO upload_history (nombreArchivo, cantidad, estado) VALUES (?, ?, ?)",
 //           [req.file.originalname, 0, "Fallo"]
@@ -269,6 +195,80 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
 //       }
 //     });
 // });
+
+
+
+// Endpoint para cargar CSV con 5 columnas
+router.post("/cargar-csv", upload.single("file"), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No se encontró el archivo en la solicitud" });
+  }
+
+  if (path.extname(req.file.originalname).toLowerCase() !== ".csv") {
+    return res.status(400).json({ error: "Tipo de archivo no permitido" });
+  }
+
+  const results = [];
+  fs.createReadStream(req.file.path)
+    .pipe(csv({ 
+      separator: ';', // Si usas ';'
+      headers: ["ID_RUTA", "lleva", "trae", "fecha_remito", "n_remito"]
+    }))
+    .on("data", (data) => {
+      results.push(data);
+    })
+    .on("end", async () => {
+      try {
+        let count = 0; // Contador de filas importadas
+        for (const row of results) {
+          const ID_RUTA = parseInt(row.ID_RUTA);
+          const valorLleva = row.lleva && row.lleva.trim() !== "" ? parseInt(row.lleva) : 0;
+          const valorTrae = row.trae && row.trae.trim() !== "" ? parseInt(row.trae) : 0;
+          const fechaRemito = row.fecha_remito ? new Date(row.fecha_remito) : null;
+          const numeroRemito = row.n_remito && row.n_remito.trim() !== ""
+        ? parseInt(row.n_remito, 10)
+        : 0;
+        const today = new Date();
+          const yyyy = today.getFullYear();
+          const mm = ("0" + (today.getMonth() + 1)).slice(-2);
+          const dd = ("0" + today.getDate()).slice(-2);
+          const fechaCargaString = `${yyyy}-${mm}-${dd}`;
+        const fechaCarga = new Date(fechaCargaString); 
+
+        // Si parseInt da NaN, lo forzamos a 0
+          if (isNaN(numeroRemito)) {
+            numeroRemito = 0;
+           }
+
+          await pool.query(
+            "INSERT INTO movimientos (ID_RUTA, lleva, trae, fecha_remito, n_remito, fecha_carga) VALUES (?, ?, ?, ?, ?, ?)",
+            [ID_RUTA, valorLleva, valorTrae, fechaRemito, numeroRemito,fechaCarga]
+          );
+          count++;
+        }
+
+        fs.unlinkSync(req.file.path);
+
+        // Insertar el registro en la tabla de historial de subidas
+        await pool.query(
+          "INSERT INTO upload_history (nombreArchivo, cantidad, estado) VALUES (?, ?, ?)",
+          [req.file.originalname, count, "OK"]
+        );
+
+        res.json({ msg: `Datos importados correctamente, se importaron ${count} registros` });
+      } catch (error) {
+        console.error("Error al procesar el CSV:", error);
+
+        // En caso de error, también registramos en el historial
+        await pool.query(
+          "INSERT INTO upload_history (nombreArchivo, cantidad, estado) VALUES (?, ?, ?)",
+          [req.file.originalname, 0, "Fallo"]
+        );
+
+        res.status(500).json({ error: "Error al procesar el CSV", details: error.message });
+      }
+    });
+});
 
 router.get("/upload-history", async (req, res) => {
   try {
