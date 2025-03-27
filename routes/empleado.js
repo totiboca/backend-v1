@@ -128,7 +128,7 @@ router.post("/cargar-csv", upload.single("file"), async (req, res) => {
           }
 
           // Verificar si la ruta existe en la tabla "rutas"
-          const [rutas] = await pool.query("SELECT * FROM rutas WHERE id_ruta = ?", [ID_RUTA]);
+          const [rutas] = await pool.query("SELECT * FROM RUTAS WHERE id_ruta = ?", [ID_RUTA]);
           if (rutas.length === 0) {
             // La ruta no existe, se omite este registro
             notImported++;
